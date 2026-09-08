@@ -1,4 +1,5 @@
-import { createClient } from '@supabase/supabase-js';
+// pages/api/process.js
+import { supabaseAdmin } from '../../lib/db';
 import { parsePdfBuffer } from '../../lib/pdfParser';
 import { splitTextIntoChunks } from '../../lib/chunker';
 import { generateEmbedding } from '../../lib/embedder';
@@ -11,18 +12,13 @@ export const config = {
   },
 };
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-);
-
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
-    const { fileData, fileName } = req.body; // base64 string and filename
+    const { fileData, fileName } = req.body;
     if (!fileData || !fileName) {
       return res.status(400).json({ error: 'Missing fileData or fileName' });
     }
@@ -45,15 +41,18 @@ export default async function handler(req, res) {
       });
     }
 
-    const { error } = await supabase.from('document_chunks').insert(rowsToInsert);
-    if (error) throw error;
+    const { error } = await supabaseAdmin.from('document_chunks').insert(rowsToInsert);
+    if (error) {
+      console.error('Supabase Insert Error:', error);
+      throw new Error(`Database error: ${error.message}`);
+    }
 
     return res.status(200).json({ 
       success: true, 
       message: `Processed ${docChunks.length} chunks for ${fileName}` 
     });
   } catch (err) {
-    console.error('Ingestion error:', err);
-    return res.status(500).json({ error: err.message });
+    console.error('Ingestion endpoint failure:', err);
+    return res.status(500).json({ error: err.message || 'Internal Server Error' });
   }
 }
