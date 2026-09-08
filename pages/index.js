@@ -1,10 +1,10 @@
-import React from "react";
+import PdfUploader from '../components/PdfUploader';
 
-const HomePage = () => (
-  <div>
-    <h1>Welcome to the Demo Home Page</h1>
-    <p>This is a demo Next.js home page.</p>
-  </div>
-);
-
-export default HomePage;
+export default function Home() {
+  return (
+    <main style={{ padding: '2rem', fontFamily: 'sans-serif' }}>
+      <h1>Document RAG Pipeline</h1>
+      <PdfUploader onUploadSuccess={(fileName) => console.log('Uploaded:', fileName)} />
+    </main>
+  );
+}
